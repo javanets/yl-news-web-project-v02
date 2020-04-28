@@ -2,17 +2,20 @@ import datetime
 
 from flask import Flask, render_template, redirect, request, make_response, session, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_restful import reqparse, abort, Api, Resource
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField, TextAreaField, SubmitField, BooleanField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired
 
 import news_api
+import news_resources
 from data import db_session
 from data.news import News
 from data.users import User
 
 app = Flask(__name__)
+api = Api(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -42,11 +45,6 @@ class LoginForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
-
-
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
 
 
 @app.route("/")
@@ -112,12 +110,16 @@ def logout():
 
 
 # http://127.0.0.1:8080/api/news
+# http://127.0.0.1:8080/api/v2/news
 
 
 
 def main():
     db_session.global_init('db/blogs.sqlite')
     app.register_blueprint(news_api.blueprint)
+
+    api.add_resource(news_resources.NewsListResource, '/api/v2/news')
+    api.add_resource(news_resources.NewsResources, '/api/v2/news/<int:news_id>')
     app.run(host='127.0.0.1', port=8080)
 
 
